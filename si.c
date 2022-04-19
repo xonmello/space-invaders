@@ -4,6 +4,7 @@
 //as the destination rectangle to blit to. using a seperate local rect in the drawing code solves it.
 #include <stdlib.h>
 #include <stdio.h>
+#include <wiringPi.h>
 #include "SDL/SDL.h"
 
 #define SCREEN_WIDTH 800 
@@ -1234,6 +1235,8 @@ int load_image(char filename[], SDL_Surface **surface, enum ck_t colour_key) {
 
 //Main program
 int main() {
+	// Allow GPIO Access
+	wiringPiSetup();
 	
 	/* Initialize SDL’s video system and check for errors */
 	if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -1282,6 +1285,19 @@ int main() {
 	init_bullets(e_bullets, E_BULLETS);
 	state = menu;
 	title_time = SDL_GetTicks();
+
+	// GPIO Setup - https://projects.drogon.net/raspberry-pi/wiringpi/pins/ (don't get me started on this)
+	const int leftDirection = 2; // GPIO 17
+	const int rightDirection = 2; // GPIO 27
+	const int fireButton = 7; // GPIO 4
+
+	pinMode(leftDirection, INPUT);
+	pinMode(rightDirection, INPUT);
+	pinMode(fireButton, INPUT);
+
+	pullUpDownControl(leftDirection, PUD_OFF);
+	pullUpDownControl(rightDirection, PUD_OFF);
+	pullUpDownControl(fireButton, PUD_OFF);
 		
 	/* Animate */
 	while (quit == 0) {
@@ -1330,12 +1346,33 @@ int main() {
 				break;
 			}
 		}
-	
+
+		// GPIO check, same as above SDLK_SPACE
+		if (digitalRead(fireButton)) {
+			if (state == menu) {
+
+				state = game;
+
+			} else if (state == game){
+				
+				player_shoot();
+				saucer_ai();
+			
+			} else if (state == game_over) {
+			
+				init_invaders();
+				init_bases();
+				init_score();
+				init_player();
+				state = game;
+			}
+		}
+
 		draw_background();
 
 		if (state == menu) {
 			
-			char s[] = "Press SPACEBAR to start";
+			char s[] = "Press FIRE to start";
 			SDL_Rect src[60];
 			
 			int i;
@@ -1378,12 +1415,12 @@ int main() {
 		} else if (state == game) {
 
 			//move player
-			if (keystate[SDLK_LEFT]) {
+			if (keystate[SDLK_LEFT] || digitalRead(leftDirection)) {
 				
 				move_player(left);
 			}
 
-			if (keystate[SDLK_RIGHT]) {
+			if (keystate[SDLK_RIGHT] || digitalRead(rightDirection)) {
 				
 				move_player(right);
 			}
@@ -1442,8 +1479,8 @@ int main() {
 	
 		if( sleep >= 0 ) {
 
-            		SDL_Delay(sleep);
-        	}
+			SDL_Delay(sleep);
+		}
 	}
 	
 	return 0;
