@@ -534,6 +534,34 @@ void set_invaders_speed() {
 			invaders.state_speed = 0;
 			break;
 	}
+	if (digitalRead(sweatMode)) {
+		switch (invaders.killed) {
+		
+			case 10:
+
+				invaders.speed = 4;
+				invaders.state_speed = 600;
+				break;
+			
+			case 20:
+
+				invaders.speed = 8;
+				invaders.state_speed = 200;
+				break;
+			
+			case 30:
+
+				invaders.speed = 16;
+				invaders.state_speed = 0;
+				break;
+			
+			case 40:
+
+				invaders.speed = 16;
+				invaders.state_speed = 0;
+				break;
+		}
+	}
 }
 
 //Move positions of both enemy and player bullets on screen
@@ -1287,17 +1315,20 @@ int main() {
 	title_time = SDL_GetTicks();
 
 	// GPIO Setup - https://projects.drogon.net/raspberry-pi/wiringpi/pins/ (don't get me started on this)
-	const int leftDirection = 2; // GPIO 17
+	const int leftDirection = 0; // GPIO 17
 	const int rightDirection = 2; // GPIO 27
 	const int fireButton = 7; // GPIO 4
+	const int sweatMode = 3; // GPIO 7
 
 	pinMode(leftDirection, INPUT);
 	pinMode(rightDirection, INPUT);
 	pinMode(fireButton, INPUT);
+	pinMode(sweatMode, INPUT);
 
 	pullUpDownControl(leftDirection, PUD_OFF);
 	pullUpDownControl(rightDirection, PUD_OFF);
 	pullUpDownControl(fireButton, PUD_OFF);
+	pullUpDownControl(sweatMode, PUD_OFF);
 		
 	/* Animate */
 	while (quit == 0) {
